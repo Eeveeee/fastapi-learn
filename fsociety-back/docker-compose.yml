@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      # These are used only on first initialization of a fresh data directory
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: appdb
+    ports:
+      # Expose container's 5432 to your host's 5432:
+      # your FastAPI app (running on host) connects to localhost:5432 (TCP)
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+
+volumes:
+  pgdata:
