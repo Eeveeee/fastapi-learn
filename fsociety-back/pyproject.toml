@@ -8,6 +8,7 @@ dependencies = [
     "alembic>=1.17.2",
     "asyncpg>=0.31.0",
     "fastapi[standard]>=0.124.2",
+    "greenlet>=3.3.0",
     "psycopg>=3.3.2",
     "pydantic>=2.12.5",
     "sqlalchemy>=2.0.45",

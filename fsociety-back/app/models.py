@@ -1,7 +1,15 @@
-from sqlalchemy import Boolean, Integer, String
+
+import enum
+
+from sqlalchemy import Boolean, Enum, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
+
+
+class Gender(str, enum.Enum):
+    male = "male"
+    female = "female"
 
 
 class User(Base):
@@ -19,3 +27,4 @@ class User(Base):
 
     role: Mapped[str] = mapped_column(String(50), default="user")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    gender: Mapped[Gender] = mapped_column(Enum(Gender), nullable=False)
