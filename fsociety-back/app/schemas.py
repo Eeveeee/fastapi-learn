@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -8,6 +10,7 @@ class UserCreate(BaseModel):
     last_name: str
     role: str = "user"
     is_active: bool = True
+    gender:Literal["male", "female"]
 
 
 class UserOut(UserCreate):
