@@ -1,20 +1,29 @@
-import { Button, TextInput, Select, Stack } from "@mantine/core";
-import { useForm } from "@mantine/form";
-import { zod4Resolver } from "mantine-form-zod-resolver";
-
 import { useCreateUser } from "../../hooks/api/useCreateUser";
 import { createUserSchema, type CreateUser } from "../../api/users.schema";
+import { Input } from "../../components/ui/input";
+import { Button } from "../../components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
 export function SignUp() {
-  const form = useForm<CreateUser>({
-    initialValues: {
+  const { register, handleSubmit, formState } = useForm<CreateUser>({
+    defaultValues: {
       first_name: "",
       last_name: "",
       username: "",
       email: "",
       gender: "male",
     },
-    validate: zod4Resolver(createUserSchema),
+    resolver: zodResolver(createUserSchema),
   });
   const { mutateAsync, error, isPending } = useCreateUser();
 
@@ -23,24 +32,27 @@ export function SignUp() {
     mutateAsync(values);
   };
   return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
-      <Stack>
-        <TextInput label="First name" {...form.getInputProps("first_name")} />
-        <TextInput label="Last name" {...form.getInputProps("last_name")} />
-        <TextInput label="Username" {...form.getInputProps("username")} />
-        <TextInput label="Email" {...form.getInputProps("email")} />
-
-        <Select
-          label="Gender"
-          data={[
-            { value: "male", label: "male" },
-            { value: "female", label: "female" },
-          ]}
-          {...form.getInputProps("gender")}
-        />
-
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="flex flex-col gap-4">
+        <Input {...register("first_name")} />
+        <Input {...register("last_name")} />
+        <Input {...register("username")} />
+        <Input {...register("email")} />
+        <Select {...register("gender")}>
+          <SelectTrigger className="w-45">
+            <SelectValue placeholder="Your gender" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>gender</SelectLabel>
+              <SelectItem value="male">male</SelectItem>
+              <SelectItem value="female">female</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        {formState.errors.email && <p>{formState.errors.email.message}</p>}
         <Button type="submit">Submit</Button>
-      </Stack>
+      </div>
     </form>
   );
 }
