@@ -1,8 +1,8 @@
 import type { User } from "../types/user.type";
 import { requestData } from "./http";
-import type { CreateUser } from "./users.schema";
+import type { CreateUserSchema } from "./users.schema";
 
-export function createUser(payload: CreateUser) {
+export function createUser(payload: CreateUserSchema) {
   return requestData("users", { method: "POST", body: payload });
 }
 export function getUsers() {

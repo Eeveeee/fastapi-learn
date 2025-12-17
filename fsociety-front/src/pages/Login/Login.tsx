@@ -2,38 +2,34 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { signUpUserSchema, type SignUpSchema } from "../../api/signup.schema";
-import { useSignUp } from "../../hooks/api/useSignUp";
-
+import { loginSchema, type LoginSchema } from "../../api/login.schema";
+import { useLogin } from "../../hooks/api/useLogin";
 //TODO: Validation errors straight on inputs
 //TODO: HOC for titles
 
-export function SignUp() {
-  const { register, handleSubmit } = useForm<SignUpSchema>({
+export function Login() {
+  const { register, handleSubmit } = useForm<LoginSchema>({
     defaultValues: {
       username: "",
-      email: "",
       password: "",
     },
-    resolver: zodResolver(signUpUserSchema),
+    resolver: zodResolver(loginSchema),
   });
-  const { mutateAsync } = useSignUp();
+  const { mutateAsync } = useLogin();
 
-  const onSubmit = (values: SignUpSchema) => {
+  const onSubmit = (values: LoginSchema) => {
     console.log(values);
     mutateAsync(values);
   };
   return (
     <div>
       <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight text-balance mb-20">
-        SignUp
+        login
       </h1>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4">
           <span>Username</span>
           <Input {...register("username")} />
-          <span>Email</span>
-          <Input {...register("email")} />
           <span>Password</span>
           <Input {...register("password")} />
           <Button type="submit">Submit</Button>

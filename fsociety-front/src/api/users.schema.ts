@@ -8,4 +8,4 @@ export const createUserSchema = z.object({
   gender: z.enum(["male", "female"]),
 });
 
-export type CreateUser = z.infer<typeof createUserSchema>;
+export type CreateUserSchema = z.infer<typeof createUserSchema>;
