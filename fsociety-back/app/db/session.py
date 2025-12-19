@@ -2,12 +2,11 @@ import os
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
     AsyncSession,
     async_sessionmaker,
-    create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase
+
+from app.db.engine import engine
 
 # ---------------------------------------------------------------------
 # IMPORTANT CONCEPTS (read this once)
@@ -32,11 +31,7 @@ DATABASE_URL_ASYNC = os.environ["DATABASE_URL_ASYNC"]
 # - This initializes the pool configuration.
 # - It does NOT necessarily open TCP connections immediately; connections are typically
 #   opened lazily when first used.
-engine: AsyncEngine = create_async_engine(
-    DATABASE_URL_ASYNC,
-    echo=False,  # set True to print SQL statements (debugging)
-    pool_pre_ping=True,  # checks connections are alive before using them
-)
+
 
 # Session factory.
 # - expire_on_commit=False prevents objects from expiring after commit,
@@ -45,13 +40,6 @@ SessionLocal = async_sessionmaker(
     bind=engine,
     expire_on_commit=False,
 )
-
-
-# Base class for ORM models.
-# All your tables (models) should inherit from Base.
-class Base(DeclarativeBase):
-    pass
-
 
 # FastAPI dependency:
 # - One Session per request (safe concurrency).

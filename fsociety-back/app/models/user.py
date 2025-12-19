@@ -1,10 +1,11 @@
 
+
 import enum
 
 from sqlalchemy import Boolean, Enum, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .db import Base
+from app.db.base import Base
 
 
 class Gender(str, enum.Enum):
