@@ -14,8 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # - engine: manages DB connection pool (TCP connections)
 # - Base: holds metadata for all ORM models (tables)
 # - get_db: FastAPI dependency that gives us a DB session per request
-from .db import Base, engine, get_db
-
 # ORM model (represents the "users" table)
 from .models import User
 
