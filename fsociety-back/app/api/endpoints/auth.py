@@ -14,6 +14,7 @@ from app.core.security import (
 )
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.login import Login
 from app.schemas.token import Token
 from app.schemas.user import UserCreate, UserPublic
 
@@ -22,7 +23,7 @@ router = APIRouter(tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/token")
 
 
-@router.post("/register", response_model=UserPublic)
+@router.post("/register", response_model=Token)
 async def register(
     data: UserCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -33,16 +34,39 @@ async def register(
     if existing:
         raise HTTPException(status_code=400, detail="Username or email already exists")
 
+
     user = User(
-        username=data.username,
-        email=data.email,
-        password_hash=hash_password(data.password),
+    username=data.username,
+    email=data.email,
+    password_hash=hash_password(data.password),
+    first_name=data.first_name,
+    last_name=data.last_name,
+    gender=data.gender,
     )
+
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    return user
+    access_token = create_access_token(subject=user.username)
+    return Token(access_token=access_token, token_type="bearer")
 
+@router.post("/login", response_model=Token)
+async def login_json(
+    data: Login,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    stmt = select(User).where(User.username == data.username)
+    user = (await db.execute(stmt)).scalars().first()
+
+    if not user or not verify_password(data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = create_access_token(subject=user.username)
+    return Token(access_token=access_token, token_type="bearer")
 
 @router.post("/token", response_model=Token)
 async def login(
