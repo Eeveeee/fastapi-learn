@@ -1,7 +1,6 @@
-from sqlalchemy.orm import DeclarativeBase
+from app.db.base_class import Base
 
+# импортируем модели, чтобы они зарегистрировались в Base.metadata
+from app.models.user import User  # noqa: F401
 
-# Base class for ORM models.
-# All your tables (models) should inherit from Base.
-class Base(DeclarativeBase):
-    pass
+__all__ = ["Base"]

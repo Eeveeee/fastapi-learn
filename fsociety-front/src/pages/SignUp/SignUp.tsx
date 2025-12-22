@@ -4,6 +4,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { signUpUserSchema, type SignUpSchema } from "../../api/signup.schema";
 import { useSignUp } from "../../hooks/api/useSignUp";
+import {
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectGroup,
+  SelectLabel,
+  SelectItem,
+} from "@radix-ui/react-select";
+import { Select } from "../../components/ui/select";
 
 //TODO: Validation errors straight on inputs
 //TODO: HOC for titles
@@ -11,9 +20,12 @@ import { useSignUp } from "../../hooks/api/useSignUp";
 export function SignUp() {
   const { register, handleSubmit } = useForm<SignUpSchema>({
     defaultValues: {
+      password: "",
+      first_name: "",
+      last_name: "",
       username: "",
       email: "",
-      password: "",
+      gender: "male",
     },
     resolver: zodResolver(signUpUserSchema),
   });
@@ -30,10 +42,23 @@ export function SignUp() {
       </h1>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4">
-          <span>Username</span>
+          <Input {...register("first_name")} />
+          <Input {...register("last_name")} />
           <Input {...register("username")} />
-          <span>Email</span>
           <Input {...register("email")} />
+          <Select {...register("gender")}>
+            <SelectTrigger>
+              <SelectValue placeholder="Your gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>gender</SelectLabel>
+                <SelectItem value="male">male</SelectItem>
+                <SelectItem value="female">female</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
           <span>Password</span>
           <Input {...register("password")} />
           <Button type="submit">Submit</Button>
