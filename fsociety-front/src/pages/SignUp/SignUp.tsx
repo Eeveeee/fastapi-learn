@@ -4,15 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { signUpUserSchema, type SignUpSchema } from "../../api/signup.schema";
 import { useSignUp } from "../../hooks/api/useSignUp";
+
 import {
-  SelectTrigger,
-  SelectValue,
+  Select,
   SelectContent,
   SelectGroup,
-  SelectLabel,
   SelectItem,
-} from "@radix-ui/react-select";
-import { Select } from "../../components/ui/select";
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
 
 //TODO: Validation errors straight on inputs
 //TODO: HOC for titles
@@ -42,10 +43,10 @@ export function SignUp() {
       </h1>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4">
-          <Input {...register("first_name")} />
-          <Input {...register("last_name")} />
-          <Input {...register("username")} />
-          <Input {...register("email")} />
+          <Input {...register("first_name")} placeholder="first_name" />
+          <Input {...register("last_name")} placeholder="last_name" />
+          <Input {...register("username")} placeholder="username" />
+          <Input {...register("email")} placeholder="email" />
           <Select {...register("gender")}>
             <SelectTrigger>
               <SelectValue placeholder="Your gender" />
@@ -59,8 +60,7 @@ export function SignUp() {
             </SelectContent>
           </Select>
 
-          <span>Password</span>
-          <Input {...register("password")} />
+          <Input {...register("password")} placeholder="password" type="password" />
           <Button type="submit">Submit</Button>
         </div>
       </form>
