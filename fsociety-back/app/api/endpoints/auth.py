@@ -22,7 +22,7 @@ router = APIRouter(tags=["auth"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/token")
 
-
+#TODO: make auth not JWT-only, but with cookies + session token in db
 @router.post("/register", response_model=Token)
 async def register(
     data: UserCreate,
