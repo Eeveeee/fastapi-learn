@@ -3,7 +3,7 @@
 import enum
 
 from sqlalchemy import Boolean, Enum, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
 
@@ -31,3 +31,6 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(50), default="user")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     gender: Mapped[Gender] = mapped_column(Enum(Gender), nullable=False)
+
+    #creates relation in db to call user.refresh_tokens, and not select from
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")

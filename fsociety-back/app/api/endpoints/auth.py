@@ -1,106 +1,213 @@
 
-from typing import Annotated
+from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy import or_, select
+from datetime import datetime, timezone
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
+from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_current_user
+from app.core.config import (
+    COOKIE_DOMAIN,
+    COOKIE_SAMESITE,
+    COOKIE_SECURE,
+    REFRESH_COOKIE_NAME,
+    REFRESH_COOKIE_PATH,
+    REFRESH_TOKEN_EXPIRE_DAYS,
+)
 from app.core.security import (
     create_access_token,
-    decode_token,
+    create_refresh_token,
+    decode_refresh_payload,
     hash_password,
     verify_password,
 )
 from app.db.session import get_db
+from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.login import Login
 from app.schemas.token import Token
-from app.schemas.user import UserCreate, UserPublic
+from app.schemas.user import UserCreate, UserPrivate
 
-router = APIRouter(tags=["auth"])
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/token")
-
-#TODO: make auth not JWT-only, but with cookies + session token in db
-@router.post("/register", response_model=Token)
-async def register(
-    data: UserCreate,
-    db: Annotated[AsyncSession, Depends(get_db)],
-):
-    # Проверяем уникальность username/email
-    stmt = select(User).where(or_(User.username == data.username, User.email == data.email))
-    existing = (await db.execute(stmt)).scalars().first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Username or email already exists")
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-    user = User(
-    username=data.username,
-    email=data.email,
-    password_hash=hash_password(data.password),
-    first_name=data.first_name,
-    last_name=data.last_name,
-    gender=data.gender,
+def _set_refresh_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        path=REFRESH_COOKIE_PATH,
+        domain=COOKIE_DOMAIN,
+        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
     )
 
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-    access_token = create_access_token(subject=user.username)
-    return Token(access_token=access_token, token_type="bearer")
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=REFRESH_COOKIE_NAME,
+        path=REFRESH_COOKIE_PATH,
+        domain=COOKIE_DOMAIN,
+    )
+
+@router.get("/me", response_model=UserPrivate)
+async def getme(current_user: User = Depends(get_current_user)):
+    return current_user
 
 @router.post("/login", response_model=Token)
-async def login_json(
-    data: Login,
-    db: Annotated[AsyncSession, Depends(get_db)],
-):
-    stmt = select(User).where(User.username == data.username)
-    user = (await db.execute(stmt)).scalars().first()
-
-    if not user or not verify_password(data.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    access_token = create_access_token(subject=user.username)
-    return Token(access_token=access_token, token_type="bearer")
-
-@router.post("/token", response_model=Token)
 async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    response: Response,
+    payload: Login,
+    db: AsyncSession = Depends(get_db),
 ):
-    # OAuth2PasswordRequestForm — это form-data, не JSON
-    stmt = select(User).where(User.username == form_data.username)
-    user = (await db.execute(stmt)).scalars().first()
+    result = await db.execute(select(User).where(User.username == payload.username))
+    user = result.scalar_one_or_none()
 
-    if not user or not verify_password(form_data.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
+    if not user or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Incorrect credentials")
+
+    access = create_access_token(subject=str(user.id))
+
+    refresh_jwt, jti, issued_at, expires_at = create_refresh_token(
+        subject=str(user.id)
+    )
+
+    db.add(
+        RefreshToken(
+            user_id=user.id,
+            jti=jti,
+            issued_at=issued_at,
+            expires_at=expires_at,
         )
+    )
+    await db.commit()
 
-    token = create_access_token(subject=user.username)
-    return Token(access_token=token, token_type="bearer")
+    _set_refresh_cookie(response, refresh_jwt)
+    return Token(access_token=access)
 
 
-async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    db: Annotated[AsyncSession, Depends(get_db)],
-) -> User:
-    username = decode_token(token)
+@router.post("/refresh", response_model=Token)
+async def refresh(
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+):
+    refresh_jwt = request.cookies.get(REFRESH_COOKIE_NAME)
+    if not refresh_jwt:
+        raise HTTPException(status_code=401, detail="Missing refresh token")
 
-    stmt = select(User).where(User.username == username)
-    user = (await db.execute(stmt)).scalars().first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+    payload = decode_refresh_payload(refresh_jwt)
+    jti = payload["jti"]
+    user_id = int(payload["sub"])
+
+    result = await db.execute(
+        select(RefreshToken).where(RefreshToken.jti == jti)
+    )
+    token = result.scalar_one_or_none()
+
+    if not token or token.revoked or token.expires_at <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=401, detail="Refresh token invalid")
+
+    new_refresh, new_jti, issued_at, expires_at = create_refresh_token(
+        subject=str(user_id)
+    )
+
+    await db.execute(
+        update(RefreshToken)
+        .where(RefreshToken.jti == jti)
+        .values(
+            revoked=True,
+            revoked_at=datetime.now(timezone.utc),
+            replaced_by_jti=new_jti,
+        )
+    )
+
+    db.add(
+        RefreshToken(
+            user_id=user_id,
+            jti=new_jti,
+            issued_at=issued_at,
+            expires_at=expires_at,
+        )
+    )
+    await db.commit()
+
+    _set_refresh_cookie(response, new_refresh)
+    return Token(access_token=create_access_token(subject=str(user_id)))
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+):
+    refresh_jwt = request.cookies.get(REFRESH_COOKIE_NAME)
+    _clear_refresh_cookie(response)
+
+    if not refresh_jwt:
+        return
+
+    try:
+        payload = decode_refresh_payload(refresh_jwt)
+    except HTTPException:
+        return
+
+    await db.execute(
+        update(RefreshToken)
+        .where(RefreshToken.jti == payload["jti"])
+        .values(
+            revoked=True,
+            revoked_at=datetime.now(timezone.utc),
+        )
+    )
+    await db.commit()
+
+@router.post("/signup", response_model=UserPrivate)
+async def signIn(payload: UserCreate, db: AsyncSession = Depends(get_db)):
+    """
+    POST /signIn
+
+    Flow:
+    1. Receive JSON from client
+    2. Validate it with Pydantic (UserCreate)
+    3. Create ORM object
+    4. Commit transaction
+    """
+
+    user = User(
+    username=payload.username,
+    email=str(payload.email),
+    password_hash=hash_password(payload.password),
+    first_name=payload.first_name,
+    last_name=payload.last_name,
+    gender=payload.gender,   # "male"/"female" -> Enum(Gender) обычно примет
+    )
+    try:
+        db.add(user)
+        # Commit:
+            # - opens a DB transaction
+            # - uses a TCP connection from the pool
+            # - writes data to PostgreSQL
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="User already exists")
+
+    # Refresh:
+    # - reloads data from DB
+    # - needed to get autogenerated fields (e.g. id)
+    await db.refresh(user)
+
     return user
-
-
-@router.get("/me", response_model=UserPublic)
-async def me(current_user: Annotated[User, Depends(get_current_user)]):
-    return current_user
