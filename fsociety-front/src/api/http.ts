@@ -1,21 +1,10 @@
 import { API_URL } from "../constants/api";
 import { store } from "../store";
-import { clearAccessToken, setAccessToken } from "../store/authSlice";
+import { clearAccessToken, setIsAuthorized } from "../store/authSlice";
+import { getAndSetAccessToken } from "../store/authThunks";
+import { getFetchResult } from "../utils/getFetchResult";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-// TODO:  FUNCTIONS TO UTILS
-async function getFetchResult<TResult>(r: Response): Promise<TResult> {
-  if (r.status === 204) {
-    return undefined as TResult;
-  }
-  const contentType = r.headers.get("content-type") ?? "";
-  const hasJson = contentType.includes("application/json");
-  if (hasJson) {
-    return r.json() as Promise<TResult>;
-  }
-
-  return (await r.text()) as unknown as TResult;
-}
 
 //TODO: auth bearer not setting
 function appendAuthToRequest(request: RequestInit) {
@@ -26,7 +15,8 @@ function appendAuthToRequest(request: RequestInit) {
   if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
-
+  request.headers = headers;
+  console.log("APPENDING: ", accessToken);
   console.log("REQUEST", request);
   return request;
 }
@@ -54,32 +44,32 @@ export async function requestData<TResult, TBody>(
 
   appendAuthToRequest(fetchInit);
 
-  const res = await fetch(`${API_URL}/${url}`, fetchInit);
-  if (res.ok) {
-    const handledResult = await getFetchResult<TResult>(res);
+  const response = await fetch(`${API_URL}/${url}`, fetchInit);
+  if (response.ok) {
+    const handledResult = await getFetchResult<TResult>(response);
     return handledResult;
   }
 
-  if (res.status === 401) {
-    const refreshRes = await fetch(`${API_URL}/auth/refresh`, { method: "POST" });
+  if (response.status === 401) {
+    const token = await store.dispatch(getAndSetAccessToken());
 
-    if (refreshRes.ok) {
-      const refreshData = await refreshRes.json();
-      store.dispatch(setAccessToken(refreshData.access_token));
+    if (token) {
       appendAuthToRequest(fetchInit);
 
       const secondTry = await fetch(`${API_URL}/${url}`, fetchInit);
 
       if (!secondTry.ok) throw new Error("TOKEN MISSMATCH");
 
-      const handledResult = await getFetchResult<TResult>(res);
+      const handledResult = await getFetchResult<TResult>(secondTry);
 
       return handledResult;
     }
+
+    // Logout
     store.dispatch(clearAccessToken());
     window.localStorage.clear();
     window.sessionStorage.clear();
-    throw new Error("TOKEN ROTTEN");
+    store.dispatch(setIsAuthorized(false));
   }
 
   throw new Error("UNEXPECTED SERVER BEHAVIOR");
