@@ -17,41 +17,26 @@ from app.core.config import (
     SECRET_KEY,
 )
 
-# -------------------------------------------------
-# Password hashing (pwdlib)
-# -------------------------------------------------
-
 password_hash = PasswordHash.recommended()
 
 
 def hash_password(password: str) -> str:
-    """Hash password for DB storage."""
+    # hased so in db there is no real pwds
     return password_hash.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify user password."""
+    # just hash comparsion
     return password_hash.verify(plain_password, hashed_password)
 
 
-# -------------------------------------------------
-# Time helpers
-# -------------------------------------------------
 
 def _now() -> datetime:
-    """Single source of UTC time."""
     return datetime.now(timezone.utc)
 
 
-# -------------------------------------------------
-# Token creation
-# -------------------------------------------------
-
 def create_access_token(subject: str) -> str:
-    """
-    Access JWT for Authorization: Bearer <token>.
-    Short-lived.
-    """
+
     now = _now()
     expires_at = now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
@@ -65,11 +50,7 @@ def create_access_token(subject: str) -> str:
 
 
 def create_refresh_token(subject: str) -> tuple[str, str, datetime, datetime]:
-    """
-    Refresh JWT for /auth/refresh only.
-    Long-lived. Includes jti.
-    Returns: (jwt_str, jti, issued_at, expires_at)
-    """
+
     now = _now()
     expires_at = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     jti = uuid4().hex
@@ -85,12 +66,8 @@ def create_refresh_token(subject: str) -> tuple[str, str, datetime, datetime]:
     return token, jti, now, expires_at
 
 
-# -------------------------------------------------
-# Token decoding
-# -------------------------------------------------
 
 def decode_access_subject(token: str) -> str:
-    """Decode access JWT and return subject (sub)."""
     payload = _decode(token)
 
     if payload.get("type") != "access":
@@ -110,7 +87,6 @@ def decode_access_subject(token: str) -> str:
 
 
 def decode_refresh_payload(token: str) -> dict:
-    """Decode refresh JWT and return payload (requires sub + jti)."""
     payload = _decode(token)
 
     if payload.get("type") != "refresh":
@@ -128,14 +104,9 @@ def decode_refresh_payload(token: str) -> dict:
 
 
 def _decode(token: str) -> dict:
-    """
-    Internal helper:
-    - validates signature
-    - validates exp
-    - validates algorithm
-    Does NOT validate token "type".
-    """
+
     try:
+        # has token validation, but without type
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except InvalidTokenError:
         raise HTTPException(

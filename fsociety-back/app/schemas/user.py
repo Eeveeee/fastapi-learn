@@ -15,6 +15,8 @@ class UserCreate(BaseModel):
 
 
 class UserPublic(BaseModel):
+    # tells FastAPI/Pydantic to read data from object attributes (user.id),
+    # not from dict keys (user["id"])
     model_config = ConfigDict(from_attributes=True)
 
     id: int

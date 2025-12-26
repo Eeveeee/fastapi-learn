@@ -1,8 +1,4 @@
-# FastAPI is the web framework
-
 from fastapi import Depends
-
-# SQLAlchemy imports for querying the database
 from fastapi.routing import APIRouter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,31 +8,17 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import UserPublic
 
-# ---------------------------------------------------------------------
-# FASTAPI router.ICATION INSTANCE
-# ---------------------------------------------------------------------
-# We pass the lifespan function to FastAPI.
-# FastAPI will call it automatically.
-#
-
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-# ---------------------------------------------------------------------
-# ROUTES / ENDPOINTS
-# ---------------------------------------------------------------------
-#
 @router.get("", response_model=list[UserPublic])
 async def list_users(db: AsyncSession = Depends(get_db),_:User=Depends(get_current_user)):
     """
-    GET /users
-
     Important concepts here:
-
-    - `db` is an AsyncSession (NOT a TCP connection!)
-    - The session BORROWS a TCP connection from the pool
-      ONLY when it needs to execute SQL.
-    - After the request finishes, the connection is returned to the pool.
+     `db` is an AsyncSession (NOT a TCP connection!)
+     The session BORROWS a TCP connection from the pool
+     ONLY when it needs to execute SQL.
+     After the request finishes, the connection is returned to the pool.
     """
 
     # Build a SQL query: SELECT * FROM users;

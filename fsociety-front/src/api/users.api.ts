@@ -6,5 +6,5 @@ export function createUser(payload: CreateUserSchema) {
   return requestData("users", { method: "POST", body: payload });
 }
 export function getUsers() {
-  return requestData<User, undefined>("users", {});
+  return requestData<User[], undefined>("users", {});
 }

@@ -1,4 +1,4 @@
-import { KeyIcon, LogInIcon } from "lucide-react";
+import { KeyIcon, LogInIcon, UsersIcon } from "lucide-react";
 import {
   SidebarHeader,
   SidebarContent,
@@ -12,20 +12,35 @@ import {
   SidebarMenuItem,
 } from "../../ui/sidebar";
 import { Link, NavLink } from "react-router-dom";
+import { useAppSelector } from "../../../store/hooks";
 
 const items = [
   {
     title: "Login",
     url: "login",
     icon: LogInIcon,
+    public: true,
   },
   {
     title: "SignUp",
     url: "/signup",
     icon: KeyIcon,
+    public: true,
+  },
+  {
+    title: "Users",
+    url: "/users",
+    icon: UsersIcon,
   },
 ];
 export function AppSidebar() {
+  const isAuthorized = useAppSelector((state) => state.auth.isAuthorized);
+  console.log("IS AUTH: ", isAuthorized);
+
+  const routes = items.filter((r) => (r.public && !isAuthorized) || !r.public);
+
+  console.log("ROUTES: ", routes);
+
   return (
     <Sidebar>
       <SidebarHeader />
@@ -34,7 +49,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {routes.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
@@ -50,7 +65,7 @@ export function AppSidebar() {
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
-        </SidebarGroup>{" "}
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter />
     </Sidebar>
