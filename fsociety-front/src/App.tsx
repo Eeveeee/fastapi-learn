@@ -1,6 +1,5 @@
-import { RouterProvider } from "react-router-dom";
 import "./App.css";
-import { router } from "./router/router";
+import { AppRouter } from "./router/router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { store } from "./store";
 import { Provider } from "react-redux";
@@ -14,7 +13,7 @@ function App() {
       <Provider store={store}>
         <QueryClientProvider client={queryClient}>
           <InitProvider>
-            <RouterProvider router={router} />
+            <AppRouter />
           </InitProvider>
         </QueryClientProvider>
       </Provider>

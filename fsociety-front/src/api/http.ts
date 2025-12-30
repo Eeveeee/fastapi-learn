@@ -6,6 +6,13 @@ import { getFetchResult } from "../utils/getFetchResult";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+function Logout() {
+  store.dispatch(clearAccessToken());
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+  store.dispatch(setIsAuthorized(false));
+}
+
 //TODO: auth bearer not setting
 function appendAuthToRequest(request: RequestInit) {
   const state = store.getState();

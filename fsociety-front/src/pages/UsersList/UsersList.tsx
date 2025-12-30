@@ -20,19 +20,27 @@ export function UsersList() {
         <TableCaption>Users</TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">Invoice</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Method</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
+            <TableCell>ID</TableCell>
+            <TableHead>Username</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>First Name</TableHead>
+            <TableHead>Last Name</TableHead>
+            <TableHead>Gender</TableHead>
+            <TableHead>Role</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow>
-            <TableCell className="font-medium">INV001</TableCell>
-            <TableCell>Paid</TableCell>
-            <TableCell>Credit Card</TableCell>
-            <TableCell className="text-right">$250.00</TableCell>
-          </TableRow>
+          {data?.data?.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell>{user.id}</TableCell>
+              <TableCell>{user.username}</TableCell>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>{user.first_name}</TableCell>
+              <TableCell>{user.last_name}</TableCell>
+              <TableCell>{user.gender}</TableCell>
+              <TableCell>{user.role}</TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>
