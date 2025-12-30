@@ -75,7 +75,7 @@ async def login(
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=400, detail="Incorrect credentials")
+        raise HTTPException(status_code=400, detail={"message":"Invalid credentials","reason":"INVALID_CREDENTIALS"})
 
     access = create_access_token(subject=str(user.id))
 
@@ -105,7 +105,7 @@ async def refresh(
 ):
     refresh_jwt = request.cookies.get(REFRESH_COOKIE_NAME)
     if not refresh_jwt:
-        raise HTTPException(status_code=401, detail="Missing refresh token")
+        raise HTTPException(status_code=401, detail={"message":"Missing refresh token","reason":"MISSING_REFRESH_TOKEN"})
 
     payload = decode_refresh_payload(refresh_jwt)
     jti = payload["jti"]
@@ -117,7 +117,7 @@ async def refresh(
     token = result.scalar_one_or_none()
 
     if not token or token.revoked or token.expires_at <= datetime.now(timezone.utc):
-        raise HTTPException(status_code=401, detail="Refresh token invalid")
+        raise HTTPException(status_code=401, detail={"message":"Invalid refresh token","reason":"INVALID_REFRESH_TOKEN"})
 
     new_refresh, new_jti, issued_at, expires_at = create_refresh_token(
         subject=str(user_id)

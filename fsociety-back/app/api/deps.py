@@ -10,22 +10,23 @@ from app.models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
-
+# TODO: There is fastapi dependency(from Depends(oauth2)) for no token provided, mb i should override it
 async def get_current_user(
     db: AsyncSession = Depends(get_db),
     token: str = Depends(oauth2_scheme),
 ) -> User:
+
     subject = decode_access_subject(token)
 
     try:
         user_id = int(subject)
     except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid token subject")
+        raise HTTPException(status_code=401, detail={"message":"Invalid subject in token","reason":"INVALID_SUBJECT_IN_TOKEN"})
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
 
     if not user or not user.is_active:
-        raise HTTPException(status_code=401, detail="User not found or inactive")
+        raise HTTPException(status_code=401, detail={"message":"No such user","reason":"INVALID_USER_OR_INACTIVE"})
 
     return user
