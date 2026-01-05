@@ -37,9 +37,7 @@ export function AppSidebar() {
   const isAuthorized = useAppSelector((state) => state.auth.isAuthorized);
   console.log("IS AUTH: ", isAuthorized);
 
-  const routes = items.filter((r) => (r.public && !isAuthorized) || !r.public);
-
-  console.log("ROUTES: ", routes);
+  const routes = isAuthorized ? items.filter((r) => !r.public) : items.filter((r) => r.public);
 
   return (
     <Sidebar>

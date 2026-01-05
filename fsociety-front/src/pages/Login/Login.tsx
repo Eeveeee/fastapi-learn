@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { loginSchema, type LoginSchema } from "../../api/login.schema";
 import { useLogin } from "../../hooks/api/useLogin";
+import { initCurrentUser } from "../../store/authThunks";
+import { useAppDispatch } from "../../store/hooks";
 //TODO: Validation errors straight on inputs
 //TODO: HOC for titles
 
@@ -16,10 +18,12 @@ export function Login() {
     resolver: zodResolver(loginSchema),
   });
   const { mutateAsync } = useLogin();
+  const dispatch = useAppDispatch();
 
-  const onSubmit = (values: LoginSchema) => {
+  const onSubmit = async (values: LoginSchema) => {
     console.log(values);
-    mutateAsync(values);
+    await mutateAsync(values);
+    await dispatch(initCurrentUser());
   };
   return (
     <div>

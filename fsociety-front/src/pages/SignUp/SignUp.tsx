@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 
-//TODO: Validation errors straight on inputs
-//TODO: HOC for titles
+// TODO: Validation errors straight on inputs
+// TODO: HOC for titles
 
 export function SignUp() {
   const { register, handleSubmit } = useForm<SignUpSchema>({
@@ -30,12 +30,13 @@ export function SignUp() {
     },
     resolver: zodResolver(signUpUserSchema),
   });
-  const { mutateAsync } = useSignUp();
 
+  const { mutateAsync } = useSignUp();
   const onSubmit = (values: SignUpSchema) => {
     console.log(values);
     mutateAsync(values);
   };
+
   return (
     <div>
       <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight text-balance mb-20">

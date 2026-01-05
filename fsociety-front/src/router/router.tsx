@@ -4,28 +4,27 @@ import { Login } from "../pages/Login/Login";
 import { UsersList } from "../pages/UsersList/UsersList";
 import { ProtectedRoute } from "../components/shared/ProtectedRoute/ProtectedRoute";
 import { AppBar } from "../components/shared/AppBar/AppBar";
-import { UnauthorizedRoute } from "../components/shared/ProtectedRoute/UnauthorizedRoute";
-import { useAppSelector } from "../store/hooks";
+import { PublicRoute } from "../components/shared/ProtectedRoute/PublicRoute";
+import { NotFound } from "../pages/NotFound/NotFound";
 
 export function AppRouter() {
-  const isAuth = useAppSelector((state) => state.auth);
-  console.log("AUTH STATE: ", { ...isAuth });
   return (
     <BrowserRouter>
       <Routes>
         {/* Layout */}
         <Route element={<AppBar />}>
           {/* public */}
-          <Route element={<UnauthorizedRoute />}>
-            <Route index element={<SignUp />} />
+          <Route element={<PublicRoute />}>
             <Route path="signup" element={<SignUp />} />
-            <Route path="login" element={<Login />} />
+            <Route index path="login" element={<Login />} />
+            <Route index element={<Navigate to="/login" replace />} />
           </Route>
           {/* protected */}
           <Route element={<ProtectedRoute />}>
             <Route index path="users" element={<UsersList />} />
+            <Route index element={<Navigate to="/users" replace />} />
           </Route>
-          <Route path="*" element={<Navigate to="/users" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>

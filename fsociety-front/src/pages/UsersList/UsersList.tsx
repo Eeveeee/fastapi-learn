@@ -9,13 +9,18 @@ import {
   TableHeader,
   TableRow,
 } from "../../components/ui/table";
+import { Button } from "../../components/ui/button";
 
 export function UsersList() {
-  const data = useQuery({ queryKey: ["users"], queryFn: getUsers, retry: 0 });
-
+  const data = useQuery({
+    queryKey: ["users"],
+    queryFn: getUsers,
+    retry: 0,
+  });
   console.log("DATA: ", data);
   return (
     <div>
+      <Button onClick={() => data.refetch()}>REFETCH</Button>
       <Table>
         <TableCaption>Users</TableCaption>
         <TableHeader>

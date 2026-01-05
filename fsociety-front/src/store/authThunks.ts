@@ -44,6 +44,7 @@ export const initCurrentUser = () => async (dispatch: AppDispatch, getState: () 
   dispatch(setInitStatus("loading"));
   try {
     const user = await getCurrentUser();
+    if (!user) return;
     dispatch(setCurrentUser(user));
     dispatch(setInitStatus("succeeded"));
   } catch (e) {

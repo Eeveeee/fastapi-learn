@@ -1,8 +1,9 @@
 import { API_URL } from "../constants/api";
 import { store } from "../store";
-import { clearAccessToken, setIsAuthorized } from "../store/authSlice";
+import { clearAccessToken, setInitStatus, setIsAuthorized } from "../store/authSlice";
 import { getAndSetAccessToken } from "../store/authThunks";
 import { getFetchResult } from "../utils/getFetchResult";
+import type { ResponseDetail, ResponseError } from "./http.types";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -11,6 +12,7 @@ function Logout() {
   window.localStorage.clear();
   window.sessionStorage.clear();
   store.dispatch(setIsAuthorized(false));
+  store.dispatch(setInitStatus("failed"));
 }
 
 //TODO: auth bearer not setting
@@ -37,7 +39,7 @@ type RequestDataOptions<TBody> = {
 export async function requestData<TResult, TBody>(
   url: string,
   opts: RequestDataOptions<TBody>,
-): Promise<TResult> {
+): Promise<TResult | undefined> {
   const fetchInit = {
     method: opts.method ?? "GET",
     headers: {
@@ -52,8 +54,8 @@ export async function requestData<TResult, TBody>(
   appendAuthToRequest(fetchInit);
 
   const response = await fetch(`${API_URL}/${url}`, fetchInit);
+  const handledResult = await getFetchResult<TResult>(response);
   if (response.ok) {
-    const handledResult = await getFetchResult<TResult>(response);
     return handledResult;
   }
 
@@ -71,13 +73,7 @@ export async function requestData<TResult, TBody>(
 
       return handledResult;
     }
-
-    // Logout
-    store.dispatch(clearAccessToken());
-    window.localStorage.clear();
-    window.sessionStorage.clear();
-    store.dispatch(setIsAuthorized(false));
   }
 
-  throw new Error("UNEXPECTED SERVER BEHAVIOR");
+  Logout();
 }

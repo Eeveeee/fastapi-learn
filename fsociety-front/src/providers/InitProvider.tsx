@@ -6,13 +6,12 @@ import { Loader } from "lucide-react";
 export function InitProvider(props: PropsWithChildren) {
   const dispatch = useAppDispatch();
 
-  const isAuth = useAppSelector((state) => state.auth.currentUser);
-
+  const initStatus = useAppSelector((state) => state.auth.initStatus);
   useEffect(() => {
     dispatch(initCurrentUser());
   }, [dispatch]);
 
-  if (!isAuth) {
+  if (initStatus === "idle" || initStatus === "loading") {
     return <Loader />;
   }
 
