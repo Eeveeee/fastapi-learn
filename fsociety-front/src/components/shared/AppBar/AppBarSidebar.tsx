@@ -1,4 +1,4 @@
-import { KeyIcon, LogInIcon, UsersIcon } from "lucide-react";
+import { KeyIcon, LogInIcon, UserIcon, UsersIcon } from "lucide-react";
 import {
   SidebarHeader,
   SidebarContent,
@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../../ui/sidebar";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useAppSelector } from "../../../store/hooks";
 
 const items = [
@@ -32,10 +32,10 @@ const items = [
     url: "/users",
     icon: UsersIcon,
   },
+  { title: "Profile", url: "/self", icon: UserIcon },
 ];
 export function AppSidebar() {
   const isAuthorized = useAppSelector((state) => state.auth.isAuthorized);
-  console.log("IS AUTH: ", isAuthorized);
 
   const routes = isAuthorized ? items.filter((r) => !r.public) : items.filter((r) => r.public);
 

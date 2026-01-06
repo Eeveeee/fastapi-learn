@@ -6,6 +6,7 @@ import { ProtectedRoute } from "../components/shared/ProtectedRoute/ProtectedRou
 import { AppBar } from "../components/shared/AppBar/AppBar";
 import { PublicRoute } from "../components/shared/ProtectedRoute/PublicRoute";
 import { NotFound } from "../pages/NotFound/NotFound";
+import { SelfProfile } from "../pages/SelfProfile/SelfProfile";
 
 export function AppRouter() {
   return (
@@ -22,6 +23,7 @@ export function AppRouter() {
           {/* protected */}
           <Route element={<ProtectedRoute />}>
             <Route index path="users" element={<UsersList />} />
+            <Route index path="self" element={<SelfProfile />} />
             <Route index element={<Navigate to="/users" replace />} />
           </Route>
           <Route path="*" element={<NotFound />} />
