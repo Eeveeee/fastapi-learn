@@ -30,3 +30,9 @@ async def get_current_user(
         raise HTTPException(status_code=401, detail={"message":"No such user","reason":"INVALID_USER_OR_INACTIVE"})
 
     return user
+
+async def require_admin_rights(current_user:User=Depends(get_current_user)):
+    #TODO: make more advanced role system and ENUM for roles
+    if not current_user.role=='admin':
+     raise HTTPException(status_code=403, detail={"message":"Insufficient rights","status_code":"INVALID_RIGHTS"})
+    return current_user

@@ -32,6 +32,7 @@ export function SignUp() {
   });
 
   const { mutateAsync } = useSignUp();
+  //TODO: make login after signup
   const onSubmit = (values: SignUpSchema) => {
     console.log(values);
     mutateAsync(values);

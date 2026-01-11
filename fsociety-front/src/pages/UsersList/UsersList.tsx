@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getUsers } from "../../api/users.api";
+import { getUser, getUsers } from "../../api/users.api";
 import {
   Table,
   TableBody,
@@ -17,7 +17,8 @@ export function UsersList() {
     queryFn: getUsers,
     retry: 0,
   });
-  console.log("DATA: ", data);
+
+  console.log("ONE USER", getUser(1));
   return (
     <div>
       <Button onClick={() => data.refetch()}>REFETCH</Button>

@@ -38,7 +38,7 @@ type RequestDataOptions<TBody> = {
 
 export async function requestData<TResult, TBody>(
   url: string,
-  opts: RequestDataOptions<TBody>,
+  opts: RequestDataOptions<TBody> = {},
 ): Promise<TResult | undefined> {
   const fetchInit = {
     method: opts.method ?? "GET",

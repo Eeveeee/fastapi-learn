@@ -3,7 +3,7 @@ from fastapi.routing import APIRouter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_admin_rights
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import UserPublic
@@ -31,4 +31,12 @@ async def list_users(db: AsyncSession = Depends(get_db),_:User=Depends(get_curre
     users = result.scalars().all()
 
     return list(users)
+
+@router.get("/{requested_user_id}")
+async def get_user(requested_user_id:int,db:AsyncSession = Depends(get_db),currentUser:User=Depends(require_admin_rights)):
+   query = select(User).where(User.id==int(requested_user_id)) 
+   result = await db.execute(query)
+   user = result.scalar_one_or_none()
+
+   return user
 #TODO: CREATION OF A USER
